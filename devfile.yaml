@@ -4,6 +4,10 @@ metadata:
   description: Android development environment
 
 components:
+  - name: android-sdk
+    volume:
+      size: 2Gi
+
   - name: tools
     container:
       image: openjdk:11
@@ -22,12 +26,13 @@ components:
   - name: android-sdk-setup
     container:
       image: busybox
-      memoryLimit: 128Mi
+      memoryLimit: 256Mi
       mountSources: false
       command: ["sh", "-c"]
       args:
         - >
           wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip &&
+          mkdir -p /opt/android-sdk/cmdline-tools &&
           unzip commandlinetools-linux-8092744_latest.zip -d /opt/android-sdk/cmdline-tools &&
           mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest &&
           rm commandlinetools-linux-8092744_latest.zip
@@ -44,9 +49,6 @@ components:
       volumeMounts:
         - name: android-sdk
           path: /opt/android-sdk
-
-volumes:
-  - name: android-sdk
 
 commands:
   - id: init
