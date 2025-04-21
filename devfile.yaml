@@ -1,58 +1,40 @@
 schemaVersion: 2.2.0
 metadata:
   name: android-dev
-  description: Android development environment
+  description: Android development workspace with Android SDK and Gradle
 
 components:
   - name: android-sdk
     volume:
       size: 2Gi
 
-  - name: tools
+  - name: android-dev
     container:
       image: openjdk:11
       memoryLimit: 4Gi
       cpuLimit: 2000m
       mountSources: true
-      endpoints:
-        - name: http
-          targetPort: 8080
       volumeMounts:
         - name: android-sdk
           path: /opt/android-sdk
-      command: ["/bin/sh"]
-      args: ["-c", "while true; do sleep 30; done"]
-
-  - name: android-sdk-setup
-    container:
-      image: busybox
-      memoryLimit: 256Mi
-      mountSources: false
-      command: ["sh", "-c"]
+      command: ["/bin/bash"]
       args:
-        - >
-          wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip &&
-          mkdir -p /opt/android-sdk/cmdline-tools &&
-          unzip commandlinetools-linux-8092744_latest.zip -d /opt/android-sdk/cmdline-tools &&
-          mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest &&
-          rm commandlinetools-linux-8092744_latest.zip
-      volumeMounts:
-        - name: android-sdk
-          path: /opt/android-sdk
-      runAsUser: 0
-
-  - name: gradle
-    container:
-      image: gradle:7.4.2-jdk11
-      memoryLimit: 2Gi
-      mountSources: true
-      volumeMounts:
-        - name: android-sdk
-          path: /opt/android-sdk
+        - "-c"
+        - |
+          if [ ! -d "/opt/android-sdk/cmdline-tools/latest" ]; then
+            echo "Downloading Android command line tools..."
+            mkdir -p /opt/android-sdk/cmdline-tools
+            wget -q https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip -O sdk.zip
+            unzip sdk.zip -d /opt/android-sdk/cmdline-tools
+            mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest
+            rm sdk.zip
+          fi
+          echo "Android SDK ready. Keeping container alive..."
+          tail -f /dev/null
 
 commands:
   - id: init
     exec:
-      component: tools
-      commandLine: echo "Android dev environment ready!"
+      component: android-dev
+      commandLine: echo "Android Dev Environment Ready!"
       workingDir: /projects
