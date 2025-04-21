@@ -1,0 +1,56 @@
+schemaVersion: 2.2.0
+metadata:
+  name: android-dev
+  description: Android development environment
+
+components:
+  - name: tools
+    container:
+      image: openjdk:11
+      memoryLimit: 4Gi
+      cpuLimit: 2000m
+      mountSources: true
+      endpoints:
+        - name: http
+          targetPort: 8080
+      volumeMounts:
+        - name: android-sdk
+          path: /opt/android-sdk
+      command: ["/bin/sh"]
+      args: ["-c", "while true; do sleep 30; done"]
+
+  - name: android-sdk-setup
+    container:
+      image: busybox
+      memoryLimit: 128Mi
+      mountSources: false
+      command: ["sh", "-c"]
+      args:
+        - >
+          wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip &&
+          unzip commandlinetools-linux-8092744_latest.zip -d /opt/android-sdk/cmdline-tools &&
+          mv /opt/android-sdk/cmdline-tools/cmdline-tools /opt/android-sdk/cmdline-tools/latest &&
+          rm commandlinetools-linux-8092744_latest.zip
+      volumeMounts:
+        - name: android-sdk
+          path: /opt/android-sdk
+      runAsUser: 0
+
+  - name: gradle
+    container:
+      image: gradle:7.4.2-jdk11
+      memoryLimit: 2Gi
+      mountSources: true
+      volumeMounts:
+        - name: android-sdk
+          path: /opt/android-sdk
+
+volumes:
+  - name: android-sdk
+
+commands:
+  - id: init
+    exec:
+      component: tools
+      commandLine: echo "Android dev environment ready!"
+      workingDir: /projects
